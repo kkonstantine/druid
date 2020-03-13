@@ -53,6 +53,7 @@ import org.apache.druid.query.BySegmentResultValueClass;
 import org.apache.druid.query.ChainedExecutionQueryRunner;
 import org.apache.druid.query.DruidProcessingConfig;
 import org.apache.druid.query.FinalizeResultsQueryRunner;
+import org.apache.druid.query.QueryConfig;
 import org.apache.druid.query.QueryContexts;
 import org.apache.druid.query.QueryDataSource;
 import org.apache.druid.query.QueryPlus;
@@ -125,6 +126,7 @@ import org.apache.druid.segment.TestHelper;
 import org.apache.druid.segment.column.ColumnHolder;
 import org.apache.druid.segment.column.ValueType;
 import org.apache.druid.segment.virtual.ExpressionVirtualColumn;
+import org.apache.druid.testing.InitializedNullHandlingTest;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
@@ -152,7 +154,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @RunWith(Parameterized.class)
-public class GroupByQueryRunnerTest
+public class GroupByQueryRunnerTest extends InitializedNullHandlingTest
 {
   public static final ObjectMapper DEFAULT_MAPPER = TestHelper.makeSmileMapper();
   private static final DruidProcessingConfig DEFAULT_PROCESSING_CONFIG = new DruidProcessingConfig()
@@ -393,6 +395,7 @@ public class GroupByQueryRunnerTest
         new GroupByStrategyV2(
             processingConfig,
             configSupplier,
+            Suppliers.ofInstance(new QueryConfig()),
             bufferPool,
             mergeBufferPool,
             mapper,
@@ -4796,7 +4799,7 @@ public class GroupByQueryRunnerTest
   @Test
   public void testSubqueryWithExtractionFnInOuterQuery()
   {
-    //https://github.com/apache/incubator-druid/issues/2556
+    //https://github.com/apache/druid/issues/2556
 
     GroupByQuery subquery = makeQueryBuilder()
         .setDataSource(QueryRunnerTestHelper.DATA_SOURCE)
@@ -6850,7 +6853,7 @@ public class GroupByQueryRunnerTest
     TestHelper.assertExpectedObjects(expectedResults, results, "subtotal");
   }
 
-  // https://github.com/apache/incubator-druid/issues/7820
+  // https://github.com/apache/druid/issues/7820
   @Test
   public void testGroupByWithSubtotalsSpecWithRenamedDimensionAndFilter()
   {
@@ -9943,6 +9946,85 @@ public class GroupByQueryRunnerTest
             "1970-01-01T00:00:00.000Z",
             "marketalias",
             "total_market",
+            "rows",
+            186L
+        )
+    );
+
+    Iterable<ResultRow> results = GroupByQueryRunnerTestHelper.runQuery(factory, runner, query);
+    TestHelper.assertExpectedObjects(expectedResults, results, "order-limit");
+  }
+
+  @Test
+  public void testGroupByLimitPushDownWithLongDimensionNotInLimitSpec()
+  {
+    // Cannot vectorize due to extraction dimension spec.
+    cannotVectorize();
+
+    if (!config.getDefaultStrategy().equals(GroupByStrategySelector.STRATEGY_V2)) {
+      return;
+    }
+    GroupByQuery query = makeQueryBuilder()
+        .setDataSource(QueryRunnerTestHelper.DATA_SOURCE)
+        .setGranularity(QueryRunnerTestHelper.ALL_GRAN).setDimensions(
+            new ExtractionDimensionSpec("quality", "qualityLen", ValueType.LONG, StrlenExtractionFn.instance())
+        )
+        .setInterval(QueryRunnerTestHelper.FULL_ON_INTERVAL_SPEC)
+        .setLimitSpec(
+            new DefaultLimitSpec(
+                Collections.EMPTY_LIST,
+                6
+            )
+        ).setAggregatorSpecs(QueryRunnerTestHelper.ROWS_COUNT)
+        .overrideContext(ImmutableMap.of(GroupByQueryConfig.CTX_KEY_FORCE_LIMIT_PUSH_DOWN, true))
+        .build();
+
+    List<ResultRow> expectedResults = Arrays.asList(
+        makeRow(
+            query,
+            "1970-01-01T00:00:00.000Z",
+            "qualityLen",
+            4L,
+            "rows",
+            93L
+        ),
+        makeRow(
+            query,
+            "1970-01-01T00:00:00.000Z",
+            "qualityLen",
+            6L,
+            "rows",
+            186L
+        ),
+        makeRow(
+            query,
+            "1970-01-01T00:00:00.000Z",
+            "qualityLen",
+            7L,
+            "rows",
+            279L
+        ),
+        makeRow(
+            query,
+            "1970-01-01T00:00:00.000Z",
+            "qualityLen",
+            8L,
+            "rows",
+            93L
+        ),
+        makeRow(
+            query,
+            "1970-01-01T00:00:00.000Z",
+            "qualityLen",
+            9L,
+            "rows",
+            279L
+        ),
+        makeRow(
+            query,
+            "1970-01-01T00:00:00.000Z",
+            "qualityLen",
+            10L,
             "rows",
             186L
         )

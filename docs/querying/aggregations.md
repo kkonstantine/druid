@@ -23,7 +23,7 @@ title: "Aggregations"
   -->
 
 
-Aggregations can be provided at ingestion time as part of the ingestion spec as a way of summarizing data before it enters Apache Druid (incubating).
+Aggregations can be provided at ingestion time as part of the ingestion spec as a way of summarizing data before it enters Apache Druid.
 Aggregations can also be specified as part of many queries at query time.
 
 Available aggregations are:
@@ -120,6 +120,14 @@ Computes and stores the sum of values as 32-bit floating point value. Similar to
 { "type" : "longMax", "name" : <output_name>, "fieldName" : <metric_name> }
 ```
 
+### `doubleMean` aggregator
+
+Computes and returns arithmetic mean of a column values as 64 bit float value. This is a query time aggregator only and should not be used during indexing.
+
+```json
+{ "type" : "doubleMean", "name" : <output_name>, "fieldName" : <metric_name> }
+```
+
 ### First / Last aggregator
 
 (Double/Float/Long) First and Last aggregator cannot be used in ingestion spec, and should only be specified as part of queries.
@@ -128,7 +136,7 @@ Note that queries with first/last aggregators on a segment created with rollup e
 
 #### `doubleFirst` aggregator
 
-`doubleFirst` computes the metric value with the minimum timestamp or 0 if no row exist
+`doubleFirst` computes the metric value with the minimum timestamp or 0 in default mode or `null` in SQL compatible mode if no row exist
 
 ```json
 {
@@ -140,7 +148,7 @@ Note that queries with first/last aggregators on a segment created with rollup e
 
 #### `doubleLast` aggregator
 
-`doubleLast` computes the metric value with the maximum timestamp or 0 if no row exist
+`doubleLast` computes the metric value with the maximum timestamp or 0 in default mode or `null` in SQL compatible mode if no row exist
 
 ```json
 {
@@ -152,7 +160,7 @@ Note that queries with first/last aggregators on a segment created with rollup e
 
 #### `floatFirst` aggregator
 
-`floatFirst` computes the metric value with the minimum timestamp or 0 if no row exist
+`floatFirst` computes the metric value with the minimum timestamp or 0 in default mode or `null` in SQL compatible mode if no row exist
 
 ```json
 {
@@ -164,7 +172,7 @@ Note that queries with first/last aggregators on a segment created with rollup e
 
 #### `floatLast` aggregator
 
-`floatLast` computes the metric value with the maximum timestamp or 0 if no row exist
+`floatLast` computes the metric value with the maximum timestamp or 0 in default mode or `null` in SQL compatible mode if no row exist
 
 ```json
 {
@@ -176,7 +184,7 @@ Note that queries with first/last aggregators on a segment created with rollup e
 
 #### `longFirst` aggregator
 
-`longFirst` computes the metric value with the minimum timestamp or 0 if no row exist
+`longFirst` computes the metric value with the minimum timestamp or 0 in default mode or `null` in SQL compatible mode if no row exist
 
 ```json
 {
@@ -188,7 +196,7 @@ Note that queries with first/last aggregators on a segment created with rollup e
 
 #### `longLast` aggregator
 
-`longLast` computes the metric value with the maximum timestamp or 0 if no row exist
+`longLast` computes the metric value with the maximum timestamp or 0 in default mode or `null` in SQL compatible mode if no row exist
 
 ```json
 {
@@ -207,8 +215,7 @@ Note that queries with first/last aggregators on a segment created with rollup e
   "type" : "stringFirst",
   "name" : <output_name>,
   "fieldName" : <metric_name>,
-  "maxStringBytes" : <integer> # (optional, defaults to 1024),
-  "filterNullValues" : <boolean> # (optional, defaults to false)
+  "maxStringBytes" : <integer> # (optional, defaults to 1024)
 }
 ```
 
@@ -223,8 +230,7 @@ Note that queries with first/last aggregators on a segment created with rollup e
   "type" : "stringLast",
   "name" : <output_name>,
   "fieldName" : <metric_name>,
-  "maxStringBytes" : <integer> # (optional, defaults to 1024),
-  "filterNullValues" : <boolean> # (optional, defaults to false)
+  "maxStringBytes" : <integer> # (optional, defaults to 1024)
 }
 ```
 

@@ -24,7 +24,7 @@ sidebar_label: "Roll-up"
   -->
 
 
-Apache Druid (incubating) can summarize raw data at ingestion time using a process we refer to as "roll-up". Roll-up is a first-level aggregation operation over a selected set of columns that reduces the size of stored segments.
+Apache Druid can summarize raw data at ingestion time using a process we refer to as "roll-up". Roll-up is a first-level aggregation operation over a selected set of columns that reduces the size of stored data.
 
 This tutorial will demonstrate the effects of roll-up on an example dataset.
 
@@ -55,25 +55,19 @@ We'll ingest this data using the following ingestion task spec, located at `quic
 
 ```json
 {
-  "type" : "index",
+  "type" : "index_parallel",
   "spec" : {
     "dataSchema" : {
       "dataSource" : "rollup-tutorial",
-      "parser" : {
-        "type" : "string",
-        "parseSpec" : {
-          "format" : "json",
-          "dimensionsSpec" : {
-            "dimensions" : [
-              "srcIP",
-              "dstIP"
-            ]
-          },
-          "timestampSpec": {
-            "column": "timestamp",
-            "format": "iso"
-          }
-        }
+      "dimensionsSpec" : {
+        "dimensions" : [
+          "srcIP",
+          "dstIP"
+        ]
+      },
+      "timestampSpec": {
+        "column": "timestamp",
+        "format": "iso"
       },
       "metricsSpec" : [
         { "type" : "count", "name" : "count" },
@@ -89,16 +83,19 @@ We'll ingest this data using the following ingestion task spec, located at `quic
       }
     },
     "ioConfig" : {
-      "type" : "index",
-      "firehose" : {
+      "type" : "index_parallel",
+      "inputSource" : {
         "type" : "local",
         "baseDir" : "quickstart/tutorial",
         "filter" : "rollup-data.json"
       },
+      "inputFormat" : {
+        "type" : "json"
+      },
       "appendToExisting" : false
     },
     "tuningConfig" : {
-      "type" : "index",
+      "type" : "index_parallel",
       "maxRowsPerSegment" : 5000000,
       "maxRowsInMemory" : 25000
     }
@@ -114,7 +111,7 @@ We will see how these definitions are used after we load this data.
 
 ## Load the example data
 
-From the apache-druid-#{DRUIDVERSION} package root, run the following command:
+From the apache-druid-{{DRUIDVERSION}} package root, run the following command:
 
 ```bash
 bin/post-index-task --file quickstart/tutorial/rollup-index.json --url http://localhost:8081

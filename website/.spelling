@@ -23,6 +23,8 @@
 ACL
 APIs
 AWS
+AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
+AWS_CONTAINER_CREDENTIALS_FULL_URI
 Actian
 Authorizer
 Avatica
@@ -54,15 +56,22 @@ Double.NEGATIVE_INFINITY
 Double.NEGATIVE_INFINITY.
 Double.POSITIVE_INFINITY
 Double.POSITIVE_INFINITY.
+Dropwizard
+dropwizard
+DruidInputSource
 DruidSQL
 EC2
+EC2ContainerCredentialsProviderWrapper
+ECS
 EMR
 EMRFS
 ETL
 Elasticsearch
 FirehoseFactory
+FlattenSpec
 Float.NEGATIVE_INFINITY
 Float.POSITIVE_INFINITY
+ForwardedRequestCustomizer
 GC
 GPG
 GSSAPI
@@ -70,12 +79,14 @@ GUIs
 GroupBy
 Guice
 HDFS
+HDFSFirehose
 HLL
 HashSet
 Homebrew
 HyperLogLog
 IANA
 IETF
+IP
 IPv4
 IS0
 ISO-8601
@@ -83,15 +94,20 @@ ISO8601
 IndexSpec
 IndexTask
 InfluxDB
+InputFormat
+InputSource
 Integer.MAX_VALUE
+JBOD
 JDBC
 JDK
 JDK7
 JDK8
 JKS
+JMX
 JRE
 JS
 JSON
+JsonPath
 JVM
 JVMs
 Joda
@@ -100,6 +116,7 @@ KMS
 Kerberized
 Kerberos
 Kinesis
+Kubernetes
 LRU
 LZ4
 LZO
@@ -159,6 +176,7 @@ aggregator
 aggregators
 ambari
 analytics
+async
 authorizer
 authorizers
 autocomplete
@@ -207,7 +225,10 @@ e.g.
 encodings
 endian
 enum
+expr
 failover
+featureSpec
+findColumnsFromHeader
 filenames
 filesystem
 firefox
@@ -230,6 +251,7 @@ influxdb
 injective
 inlined
 interruptible
+jackson-jq
 javadoc
 kerberos
 keystore
@@ -243,6 +265,7 @@ lookback
 lookups
 mapreduce
 masse
+max_map_count
 memcached
 mergeable
 metadata
@@ -312,8 +335,10 @@ rsync
 runtime
 schemas
 searchable
+servlet
 sharded
 sharding
+skipHeaderRows
 smooshed
 splittable
 stdout
@@ -332,6 +357,7 @@ timestamp
 timestamps
 tradeoffs
 tsv
+ulimit
 unannounce
 unannouncements
 unary
@@ -345,6 +371,8 @@ unmerged
 unparseable
 unparsed
 uptime
+uris
+useFieldDiscovery
 v1
 v2
 vCPUs
@@ -357,6 +385,7 @@ whitelist
 whitelisted
 whitespace
 wildcard
+wildcards
 xml
 znode
 znodes
@@ -472,12 +501,14 @@ doubleMax
 doubleMean
 doubleMeanNoNulls
 doubleMin
+doubleSum
 druid.generic.useDefaultValueForNull
 limitSpec
 longMax
 longMean
 longMeanNoNulls
 longMin
+longSum
 movingAverage
 postAggregations
 postAveragers
@@ -565,6 +596,18 @@ authorizerName
 druid_system
 pollingPeriod
 roleName
+LDAP
+ldap
+MyBasicMetadataAuthenticator
+MyBasicLDAPAuthenticator
+MyBasicMetadataAuthorizer
+MyBasicLDAPAuthorizer
+credentialsValidator
+sAMAccountName
+objectClass
+initialAdminRole
+adminGroupMapping
+groupMappingName
  - ../docs/development/extensions-core/druid-kerberos.md
 8Kb
 HttpComponents
@@ -640,6 +683,8 @@ taskDuration
 9.2dist
 KinesisSupervisorIOConfig
 KinesisSupervisorTuningConfig
+Resharding
+resharding
 LZ4LZFuncompressedLZ4LZ4LZFuncompressednoneLZ4autolongsautolongslongstypeconcisetyperoaringcompressRunOnSerializationtruetypestreamendpointreplicastaskCounttaskCount
 deaggregate
 druid-kinesis-indexing-service
@@ -648,6 +693,7 @@ maxRecordsPerPollrecordsPerFetchfetchDelayMillisreplicasfetchDelayMillisrecordsP
 numKinesisShards
 numProcessors
 q.size
+repartitionTransitionDuration
 replicastaskCounttaskCount
 resetuseEarliestSequenceNumberPOST
 resumePOST
@@ -660,6 +706,15 @@ taskCounttaskDurationtaskDurationPOST
 taskDurationstartDelayperioduseEarliestSequenceNumbercompletionTimeouttaskDurationlateMessageRejectionPeriodPT1HearlyMessageRejectionPeriodPT1HPT1HrecordsPerFetchfetchDelayMillisawsAssumedRoleArnawsExternalIddeaggregateGET
 terminatePOST
 terminatedruid.worker.capacitytaskDurationcompletionTimeoutreplicastaskCountreplicas
+PT2M
+kinesis.us
+amazonaws.com
+PT6H
+GetRecords
+KCL
+signalled
+ProvisionedThroughputExceededException
+Deaggregation
  - ../docs/development/extensions-core/lookups-cached-global.md
 baz
 customJson
@@ -759,6 +814,7 @@ statsd-emitter
 coords
 dimName
 maxCoords
+Mb
 minCoords
  - ../docs/development/javascript.md
 Metaspace
@@ -803,6 +859,7 @@ listDelimiter
 timestampSpec
  - ../docs/ingestion/data-management.md
 1GB
+IOConfig
 compactionTask
 compactionTasks
 ingestSegmentFirehose
@@ -883,6 +940,8 @@ InlineFirehose
 LocalFirehose
 PartitionsSpec
 PasswordProviders
+SegmentsSplitHintSpec
+SplitHintSpec
 appendToExisting
 baseDir
 chatHandlerNumRetries
@@ -894,6 +953,8 @@ forceGuaranteedRollup
 httpAuthenticationPassword
 httpAuthenticationUsername
 ingestSegment
+InputSource
+DruidInputSource
 maxInputSegmentBytesPerTask
 maxNumConcurrentSubTasks
 maxNumSegmentsToMerge
@@ -903,6 +964,7 @@ reportParseExceptions
 segmentWriteOutMediumFactory
 sql
 sqls
+splitHintSpec
 taskStatusCheckPeriodMs
 timeChunk
 totalNumMergeTasks
@@ -1243,10 +1305,14 @@ druid.broker.cache.useCache
 druid.broker.cache.useResultLevelCache
 druid.historical.cache.populateCache
 druid.historical.cache.useCache
+enableParallelMerge
 floatSum
 maxQueuedBytes
 maxScatterGatherBytes
 minTopNThreshold
+parallelMergeInitialYieldRows
+parallelMergeParallelism
+parallelMergeSmallBatchRows
 populateCache
 populateResultLevelCache
 queryId
@@ -1352,6 +1418,7 @@ avg_num_rows
 avg_size
 created_time
 current_size
+detailed_state
 druid.server.maxSize
 druid.server.tier
 druid.sql.planner.maxSemiJoinRowsInMemory
@@ -1378,6 +1445,7 @@ runner_status
 segment_id
 server_type
 sqlTimeZone
+supervisor_id
 sys
 sys.segments
 task_id
@@ -1548,6 +1616,7 @@ java.class.path
 java.io.tmpdir
 javaOpts
 javaOptsArray
+leastBytesUsed
 loadList
 loadqueuepeon
 loadspec
@@ -1571,6 +1640,7 @@ queryType
 remoteTaskRunnerConfig
 rendezvousHash
 resultsets
+roundRobin
 runtime.properties
 runtime.properties.
 s3
@@ -1593,6 +1663,16 @@ v0.12.0
 versionReplacementString
 workerId
 yyyy-MM-dd
+taskType
+index_kafka
+c1
+c2
+ds1
+equalDistributionWithCategorySpec
+fillCapacityWithCategorySpec
+WorkerCategorySpec
+workerCategorySpec
+CategoryConfig
  - ../docs/design/index.md
 logsearch
  - ../docs/ingestion/index.md

@@ -262,7 +262,7 @@ public class IncrementalIndexStorageAdapter implements StorageAdapter
           descending,
           currEntry
       );
-      // Set maxRowIndex before creating the filterMatcher. See https://github.com/apache/incubator-druid/pull/6340
+      // Set maxRowIndex before creating the filterMatcher. See https://github.com/apache/druid/pull/6340
       maxRowIndex = index.getLastRowIndex();
       filterMatcher = filter == null ? BooleanValueMatcher.of(true) : filter.makeMatcher(columnSelectorFactory);
       numAdvanced = -1;
@@ -342,16 +342,6 @@ public class IncrementalIndexStorageAdapter implements StorageAdapter
       }
 
       done = true;
-    }
-
-    @Override
-    public void advanceTo(int offset)
-    {
-      int count = 0;
-      while (count < offset && !isDone()) {
-        advance();
-        count++;
-      }
     }
 
     @Override

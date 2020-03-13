@@ -46,7 +46,7 @@ import org.apache.druid.discovery.DiscoveryDruidNode;
 import org.apache.druid.discovery.DruidLeaderClient;
 import org.apache.druid.discovery.DruidNodeDiscovery;
 import org.apache.druid.discovery.DruidNodeDiscoveryProvider;
-import org.apache.druid.discovery.NodeType;
+import org.apache.druid.discovery.NodeRole;
 import org.apache.druid.java.util.common.IAE;
 import org.apache.druid.java.util.common.Intervals;
 import org.apache.druid.java.util.common.Pair;
@@ -356,37 +356,37 @@ public class SystemSchemaTest extends CalciteTestBase
 
   private final DiscoveryDruidNode coordinator = new DiscoveryDruidNode(
       new DruidNode("s1", "localhost", false, 8081, null, true, false),
-      NodeType.COORDINATOR,
+      NodeRole.COORDINATOR,
       ImmutableMap.of()
   );
 
   private final DiscoveryDruidNode overlord = new DiscoveryDruidNode(
       new DruidNode("s2", "localhost", false, 8090, null, true, false),
-      NodeType.OVERLORD,
+      NodeRole.OVERLORD,
       ImmutableMap.of()
   );
 
   private final DiscoveryDruidNode broker1 = new DiscoveryDruidNode(
       new DruidNode("s3", "localhost", false, 8082, null, true, false),
-      NodeType.BROKER,
+      NodeRole.BROKER,
       ImmutableMap.of()
   );
 
   private final DiscoveryDruidNode broker2 = new DiscoveryDruidNode(
       new DruidNode("s3", "brokerHost", false, 8082, null, true, false),
-      NodeType.BROKER,
+      NodeRole.BROKER,
       ImmutableMap.of()
   );
 
   private final DiscoveryDruidNode router = new DiscoveryDruidNode(
       new DruidNode("s4", "localhost", false, 8888, null, true, false),
-      NodeType.ROUTER,
+      NodeRole.ROUTER,
       ImmutableMap.of()
   );
 
   private final DiscoveryDruidNode historical1 = new DiscoveryDruidNode(
       new DruidNode("s5", "localhost", false, 8083, null, true, false),
-      NodeType.HISTORICAL,
+      NodeRole.HISTORICAL,
       ImmutableMap.of(
           DataNodeService.DISCOVERY_SERVICE_KEY, new DataNodeService("tier", 1000, ServerType.HISTORICAL, 0)
       )
@@ -394,21 +394,21 @@ public class SystemSchemaTest extends CalciteTestBase
 
   private final DiscoveryDruidNode historical2 = new DiscoveryDruidNode(
       new DruidNode("s5", "histHost", false, 8083, null, true, false),
-      NodeType.HISTORICAL,
+      NodeRole.HISTORICAL,
       ImmutableMap.of(
           DataNodeService.DISCOVERY_SERVICE_KEY, new DataNodeService("tier", 1000, ServerType.HISTORICAL, 0))
   );
 
   private final DiscoveryDruidNode middleManager = new DiscoveryDruidNode(
       new DruidNode("s6", "mmHost", false, 8091, null, true, false),
-      NodeType.MIDDLE_MANAGER,
+      NodeRole.MIDDLE_MANAGER,
       ImmutableMap.of(
           DataNodeService.DISCOVERY_SERVICE_KEY, new DataNodeService("tier", 1000, ServerType.INDEXER_EXECUTOR, 0))
   );
 
   private final DiscoveryDruidNode peon1 = new DiscoveryDruidNode(
       new DruidNode("s7", "localhost", false, 8080, null, true, false),
-      NodeType.PEON,
+      NodeRole.PEON,
       ImmutableMap.of(
           DataNodeService.DISCOVERY_SERVICE_KEY, new DataNodeService("tier", 1000, ServerType.HISTORICAL, 0)
       )
@@ -416,14 +416,14 @@ public class SystemSchemaTest extends CalciteTestBase
 
   private final DiscoveryDruidNode peon2 = new DiscoveryDruidNode(
       new DruidNode("s7", "peonHost", false, 8080, null, true, false),
-      NodeType.PEON,
+      NodeRole.PEON,
       ImmutableMap.of(
           DataNodeService.DISCOVERY_SERVICE_KEY, new DataNodeService("tier", 1000, ServerType.HISTORICAL, 0))
   );
 
   private final DiscoveryDruidNode indexer = new DiscoveryDruidNode(
       new DruidNode("s8", "indexerHost", false, 8091, null, true, false),
-      NodeType.INDEXER,
+      NodeRole.INDEXER,
       ImmutableMap.of(
           DataNodeService.DISCOVERY_SERVICE_KEY, new DataNodeService("tier", 1000, ServerType.INDEXER_EXECUTOR, 0))
   );
@@ -453,10 +453,16 @@ public class SystemSchemaTest extends CalciteTestBase
   @Test
   public void testGetTableMap()
   {
-    Assert.assertEquals(ImmutableSet.of("segments", "servers", "server_segments", "tasks"), schema.getTableNames());
+    Assert.assertEquals(
+        ImmutableSet.of("segments", "servers", "server_segments", "tasks", "supervisors"),
+        schema.getTableNames()
+    );
 
     final Map<String, Table> tableMap = schema.getTableMap();
-    Assert.assertEquals(ImmutableSet.of("segments", "servers", "server_segments", "tasks"), tableMap.keySet());
+    Assert.assertEquals(
+        ImmutableSet.of("segments", "servers", "server_segments", "tasks", "supervisors"),
+        tableMap.keySet()
+    );
     final SystemSchema.SegmentsTable segmentsTable = (SystemSchema.SegmentsTable) schema.getTableMap().get("segments");
     final RelDataType rowType = segmentsTable.getRowType(new JavaTypeFactoryImpl());
     final List<RelDataTypeField> fields = rowType.getFieldList();
@@ -696,24 +702,24 @@ public class SystemSchemaTest extends CalciteTestBase
     final DruidNodeDiscovery indexerNodeDiscovery = EasyMock.createMock(DruidNodeDiscovery.class);
 
 
-    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeType(NodeType.COORDINATOR))
+    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeRole(NodeRole.COORDINATOR))
             .andReturn(coordinatorNodeDiscovery)
             .once();
-    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeType(NodeType.OVERLORD))
+    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeRole(NodeRole.OVERLORD))
             .andReturn(overlordNodeDiscovery)
             .once();
-    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeType(NodeType.BROKER)).andReturn(brokerNodeDiscovery).once();
-    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeType(NodeType.ROUTER)).andReturn(routerNodeDiscovery).once();
-    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeType(NodeType.HISTORICAL))
+    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeRole(NodeRole.BROKER)).andReturn(brokerNodeDiscovery).once();
+    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeRole(NodeRole.ROUTER)).andReturn(routerNodeDiscovery).once();
+    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeRole(NodeRole.HISTORICAL))
             .andReturn(historicalNodeDiscovery)
             .once();
-    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeType(NodeType.MIDDLE_MANAGER))
+    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeRole(NodeRole.MIDDLE_MANAGER))
             .andReturn(mmNodeDiscovery)
             .once();
-    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeType(NodeType.INDEXER))
+    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeRole(NodeRole.INDEXER))
             .andReturn(indexerNodeDiscovery)
             .once();
-    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeType(NodeType.PEON)).andReturn(peonNodeDiscovery).once();
+    EasyMock.expect(druidNodeDiscoveryProvider.getForNodeRole(NodeRole.PEON)).andReturn(peonNodeDiscovery).once();
 
     EasyMock.expect(coordinatorNodeDiscovery.getAllNodes()).andReturn(ImmutableList.of(coordinator)).once();
     EasyMock.expect(overlordNodeDiscovery.getAllNodes()).andReturn(ImmutableList.of(overlord)).once();
@@ -1111,6 +1117,90 @@ public class SystemSchemaTest extends CalciteTestBase
 
     // Verify value types.
     verifyTypes(rows, SystemSchema.TASKS_SIGNATURE);
+  }
+
+  @Test
+  public void testSupervisorTable() throws Exception
+  {
+
+    SystemSchema.SupervisorsTable supervisorTable = EasyMock.createMockBuilder(SystemSchema.SupervisorsTable.class)
+                                                            .withConstructor(client, mapper, responseHandler, authMapper)
+                                                            .createMock();
+    EasyMock.replay(supervisorTable);
+    EasyMock.expect(client.makeRequest(HttpMethod.GET, "/druid/indexer/v1/supervisor?system", false))
+            .andReturn(request)
+            .anyTimes();
+    SettableFuture<InputStream> future = SettableFuture.create();
+    EasyMock.expect(client.goAsync(request, responseHandler)).andReturn(future).once();
+    final int ok = HttpServletResponse.SC_OK;
+    EasyMock.expect(responseHandler.getStatus()).andReturn(ok).anyTimes();
+    EasyMock.expect(request.getUrl())
+            .andReturn(new URL("http://test-host:1234/druid/indexer/v1/supervisor?system"))
+            .anyTimes();
+
+    AppendableByteArrayInputStream in = new AppendableByteArrayInputStream();
+
+    String json = "[{\n"
+                  + "\t\"id\": \"wikipedia\",\n"
+                  + "\t\"state\": \"UNHEALTHY_SUPERVISOR\",\n"
+                  + "\t\"detailedState\": \"UNABLE_TO_CONNECT_TO_STREAM\",\n"
+                  + "\t\"healthy\": false,\n"
+                  + "\t\"specString\": \"{\\\"type\\\":\\\"kafka\\\",\\\"dataSchema\\\":{\\\"dataSource\\\":\\\"wikipedia\\\"}"
+                  + ",\\\"context\\\":null,\\\"suspended\\\":false}\",\n"
+                  + "\t\"type\": \"kafka\",\n"
+                  + "\t\"source\": \"wikipedia\",\n"
+                  + "\t\"suspended\": false\n"
+                  + "}]";
+
+    byte[] bytesToWrite = json.getBytes(StandardCharsets.UTF_8);
+    in.add(bytesToWrite);
+    in.done();
+    future.set(in);
+
+    EasyMock.replay(client, request, responseHandler);
+    DataContext dataContext = new DataContext()
+    {
+      @Override
+      public SchemaPlus getRootSchema()
+      {
+        return null;
+      }
+
+      @Override
+      public JavaTypeFactory getTypeFactory()
+      {
+        return null;
+      }
+
+      @Override
+      public QueryProvider getQueryProvider()
+      {
+        return null;
+      }
+
+      @Override
+      public Object get(String name)
+      {
+        return CalciteTests.SUPER_USER_AUTH_RESULT;
+      }
+    };
+    final List<Object[]> rows = supervisorTable.scan(dataContext).toList();
+
+    Object[] row0 = rows.get(0);
+    Assert.assertEquals("wikipedia", row0[0].toString());
+    Assert.assertEquals("UNHEALTHY_SUPERVISOR", row0[1].toString());
+    Assert.assertEquals("UNABLE_TO_CONNECT_TO_STREAM", row0[2].toString());
+    Assert.assertEquals(0L, row0[3]);
+    Assert.assertEquals("kafka", row0[4].toString());
+    Assert.assertEquals("wikipedia", row0[5].toString());
+    Assert.assertEquals(0L, row0[6]);
+    Assert.assertEquals(
+        "{\"type\":\"kafka\",\"dataSchema\":{\"dataSource\":\"wikipedia\"},\"context\":null,\"suspended\":false}",
+        row0[7].toString()
+    );
+
+    // Verify value types.
+    verifyTypes(rows, SystemSchema.SUPERVISOR_SIGNATURE);
   }
 
   private static void verifyTypes(final List<Object[]> rows, final RowSignature signature)

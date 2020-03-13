@@ -183,7 +183,8 @@ public class WorkerHolder
             worker.getHost(),
             worker.getIp(),
             worker.getCapacity(),
-            ""
+            "",
+            worker.getCategory()
         );
       }
       w = disabledWorker;
@@ -329,6 +330,22 @@ public class WorkerHolder
     if (!syncer.awaitInitialization(3 * syncer.getServerHttpTimeout(), TimeUnit.MILLISECONDS)) {
       throw new RE("Failed to sync with worker[%s].", worker.getHost());
     }
+  }
+
+  public boolean isInitialized()
+  {
+    try {
+      return syncer.awaitInitialization(1, TimeUnit.MILLISECONDS);
+    }
+    catch (InterruptedException ignored) {
+      Thread.currentThread().interrupt();
+      return false;
+    }
+  }
+
+  public boolean isEnabled()
+  {
+    return !disabled.get();
   }
 
   public ChangeRequestHttpSyncer<WorkerHistoryItem> getUnderlyingSyncer()

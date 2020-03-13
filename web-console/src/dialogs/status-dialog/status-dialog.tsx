@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-import { Button, Classes, Dialog, FormGroup, InputGroup, Intent } from '@blueprintjs/core';
+import { Button, Classes, Dialog, Intent } from '@blueprintjs/core';
 import axios from 'axios';
 import React from 'react';
 import ReactTable, { Filter } from 'react-table';
@@ -27,13 +27,19 @@ import { QueryManager } from '../../utils';
 
 import './status-dialog.scss';
 
+interface StatusResponse {
+  version: string;
+  modules: any[];
+}
+
 interface StatusDialogProps {
   onClose: () => void;
 }
 
 interface StatusDialogState {
-  response: any;
+  response?: StatusResponse;
   loading: boolean;
+  error?: string;
 }
 
 export class StatusDialog extends React.PureComponent<StatusDialogProps, StatusDialogState> {
@@ -42,22 +48,23 @@ export class StatusDialog extends React.PureComponent<StatusDialogProps, StatusD
   }
 
   private showStatusQueryManager: QueryManager<null, any>;
+
   constructor(props: StatusDialogProps, context: any) {
     super(props, context);
     this.state = {
-      response: [],
       loading: false,
     };
+
     this.showStatusQueryManager = new QueryManager({
       processQuery: async () => {
-        const endpoint = UrlBaser.base(`/status`);
-        const resp = await axios.get(endpoint);
+        const resp = await axios.get(`/status`);
         return resp.data;
       },
-      onStateChange: ({ result, loading }) => {
+      onStateChange: ({ result, loading, error }) => {
         this.setState({
           loading,
           response: result,
+          error,
         });
       },
     });
@@ -67,16 +74,19 @@ export class StatusDialog extends React.PureComponent<StatusDialogProps, StatusD
     this.showStatusQueryManager.runQuery(null);
   }
 
-  render(): JSX.Element {
-    const { onClose } = this.props;
-    const { response, loading } = this.state;
-    if (loading) return <Loader />;
-    return (
-      <Dialog className={'status-dialog'} onClose={onClose} isOpen title="Status">
-        <div className={'status-dialog-main-area'}>
-          <FormGroup label="Version" labelFor="version" inline>
-            <InputGroup id="version" defaultValue={response.version} readOnly />
-          </FormGroup>
+  renderContent(): JSX.Element | undefined {
+    const { response, loading, error } = this.state;
+
+    if (loading) return <Loader loading />;
+
+    if (error) return <span>{`Error while loading status: ${error}`}</span>;
+
+    if (response) {
+      return (
+        <div className="main-container">
+          <div className="version">
+            Version:&nbsp;<strong>{response.version}</strong>
+          </div>
           <ReactTable
             data={response.modules}
             columns={[
@@ -104,16 +114,27 @@ export class StatusDialog extends React.PureComponent<StatusDialogProps, StatusD
             defaultFilterMethod={StatusDialog.anywhereMatcher}
           />
         </div>
+      );
+    }
+
+    return;
+  }
+
+  render(): JSX.Element {
+    const { onClose } = this.props;
+
+    return (
+      <Dialog className="status-dialog" onClose={onClose} isOpen title="Status">
+        <div className={Classes.DIALOG_BODY}>{this.renderContent()}</div>
         <div className={Classes.DIALOG_FOOTER}>
-          <div className="viewRawButton">
+          <div className="view-raw-button">
             <Button
               text="View raw"
-              disabled={!response}
               minimal
-              onClick={() => window.open(UrlBaser.base(UrlBaser.base(`/status`)), '_blank')}
+              onClick={() => window.open(UrlBaser.base(`/status`), '_blank')}
             />
           </div>
-          <div className="closeButton">
+          <div className="close-button">
             <Button text="Close" intent={Intent.PRIMARY} onClick={onClose} />
           </div>
         </div>

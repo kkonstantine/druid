@@ -43,6 +43,7 @@ import org.apache.druid.metadata.SQLMetadataConnector;
 import org.apache.druid.segment.loading.DataSegmentPusher;
 import org.apache.druid.server.DruidNode;
 import org.apache.druid.timeline.DataSegment;
+import org.apache.druid.timeline.DataSegment.PruneSpecsHolder;
 
 import javax.annotation.Nullable;
 import javax.xml.bind.DatatypeConverter;
@@ -142,7 +143,7 @@ public class ExportMetadata extends GuiceRunnable
         // This area is copied from CreateTables.
         // It's unknown why those modules are required in CreateTables, and if all of those modules are required or not.
         // Maybe some of those modules could be removed.
-        // See https://github.com/apache/incubator-druid/pull/4429#discussion_r123602930
+        // See https://github.com/apache/druid/pull/4429#discussion_r123602930
         new DruidProcessingModule(),
         new QueryableModule(),
         new QueryRunnerFactoryModule(),
@@ -190,7 +191,7 @@ public class ExportMetadata extends GuiceRunnable
   {
     InjectableValues.Std injectableValues = new InjectableValues.Std();
     injectableValues.addValue(ObjectMapper.class, JSON_MAPPER);
-    injectableValues.addValue(DataSegment.PruneLoadSpecHolder.class, DataSegment.PruneLoadSpecHolder.DEFAULT);
+    injectableValues.addValue(PruneSpecsHolder.class, PruneSpecsHolder.DEFAULT);
     JSON_MAPPER.setInjectableValues(injectableValues);
 
     if (hadoopStorageDirectory != null && newLocalPath != null) {
