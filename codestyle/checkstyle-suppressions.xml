@@ -69,4 +69,8 @@
 
   <suppress checks="ImportOrder" files="[\\/]target[\\/]generated-test-sources[\\/]" />
   <suppress checks="EmptyLineSeparator" files="[\\/]target[\\/]generated-test-sources[\\/]" />
+
+  <!-- Confluent Extensions -->
+  <suppress checks="Header" files="[\\/]io[\\/]confluent[\\/]" />
+  <suppress checks="PackageName" files="[\\/]io[\\/]confluent[\\/]" />
 </suppressions>
