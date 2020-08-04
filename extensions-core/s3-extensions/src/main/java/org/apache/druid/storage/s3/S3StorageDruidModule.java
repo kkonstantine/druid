@@ -60,6 +60,25 @@ public class S3StorageDruidModule implements DruidModule
 
   private static final Logger log = new Logger(S3StorageDruidModule.class);
 
+  private static ClientConfiguration setTimeouts(ClientConfiguration conf, S3ClientConfig s3ClientConfig)
+  {
+    if (s3ClientConfig == null) {
+      return conf;
+    }
+    if (s3ClientConfig.getRequestTimeout().isPresent()) {
+      int requestTimeout = s3ClientConfig.getRequestTimeout().getAsInt();
+      conf.setRequestTimeout(requestTimeout);
+      log.debug("[s3 client] sets [%d]ms to wait for the request to complete before giving up and timing out.", requestTimeout);
+    }
+    if (s3ClientConfig.getClientExecutionTimeout().isPresent()) {
+      int clientExecutionTimeout = s3ClientConfig.getClientExecutionTimeout().getAsInt();
+      conf.setClientExecutionTimeout(clientExecutionTimeout);
+      log.debug("[s3 client] sets [%d]ms to allow the client to complete the execution of an API call", clientExecutionTimeout);
+    }
+
+    return conf;
+  }
+
   private static ClientConfiguration setProxyConfig(ClientConfiguration conf, AWSProxyConfig proxyConfig)
   {
     if (StringUtils.isNotEmpty(proxyConfig.getHost())) {
@@ -181,7 +200,7 @@ public class S3StorageDruidModule implements DruidModule
     final AmazonS3ClientBuilder builder = AmazonS3Client
         .builder()
         .withCredentials(provider)
-        .withClientConfiguration(setProxyConfig(configuration, proxyConfig).withProtocol(protocol))
+        .withClientConfiguration(setProxyConfig(setTimeouts(configuration, storageConfig.getS3ClientConfig()), proxyConfig).withProtocol(protocol))
         .withChunkedEncodingDisabled(clientConfig.isDisableChunkedEncoding())
         .withPathStyleAccessEnabled(clientConfig.isEnablePathStyleAccess())
         .withForceGlobalBucketAccessEnabled(clientConfig.isForceGlobalBucketAccessEnabled());

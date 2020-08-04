@@ -36,12 +36,31 @@ public class S3StorageConfig
   @JsonProperty("sse")
   private final ServerSideEncryption serverSideEncryption;
 
+  /**
+   * S3 client config. We use a short name to match the configuration prefix with {@link S3ClientConfig}
+   *
+   * @see S3StorageDruidModule#configure
+   */
+  @JsonProperty("client")
+  private final S3ClientConfig s3ClientConfig;
+    
   @JsonCreator
   public S3StorageConfig(
       @JsonProperty("sse") ServerSideEncryption serverSideEncryption
   )
   {
     this.serverSideEncryption = serverSideEncryption == null ? new NoopServerSideEncryption() : serverSideEncryption;
+    this.s3ClientConfig = null;
+  }
+
+  @JsonCreator
+  public S3StorageConfig(
+      @JsonProperty("sse") ServerSideEncryption serverSideEncryption,
+      @JsonProperty("client") S3ClientConfig s3ClientConfig
+  )
+  {
+    this.serverSideEncryption = serverSideEncryption == null ? new NoopServerSideEncryption() : serverSideEncryption;
+    this.s3ClientConfig = s3ClientConfig;
   }
 
   @JsonProperty("sse")
@@ -49,4 +68,11 @@ public class S3StorageConfig
   {
     return serverSideEncryption;
   }
+
+  @JsonProperty("client")
+  public S3ClientConfig getS3ClientConfig()
+  {
+    return s3ClientConfig;
+  }
+    
 }
