@@ -46,15 +46,6 @@ public class S3StorageConfig
     
   @JsonCreator
   public S3StorageConfig(
-      @JsonProperty("sse") ServerSideEncryption serverSideEncryption
-  )
-  {
-    this.serverSideEncryption = serverSideEncryption == null ? new NoopServerSideEncryption() : serverSideEncryption;
-    this.s3ClientConfig = null;
-  }
-
-  @JsonCreator
-  public S3StorageConfig(
       @JsonProperty("sse") ServerSideEncryption serverSideEncryption,
       @JsonProperty("client") S3ClientConfig s3ClientConfig
   )

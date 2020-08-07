@@ -39,6 +39,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.OptionalInt;
+
 
 public class TestAWSCredentialsProvider
 {
@@ -67,7 +69,9 @@ public class TestAWSCredentialsProvider
         new AWSProxyConfig(),
         new AWSEndpointConfig(),
         new AWSClientConfig(),
-        new S3StorageConfig(new NoopServerSideEncryption())
+        new S3StorageConfig(new NoopServerSideEncryption(),
+                            new S3ClientConfig().setRequestTimeout(OptionalInt.of(60000))
+                                                .setClientExecutionTimeout(OptionalInt.of(180000)))
     );
   }
 
@@ -98,7 +102,9 @@ public class TestAWSCredentialsProvider
         new AWSProxyConfig(),
         new AWSEndpointConfig(),
         new AWSClientConfig(),
-        new S3StorageConfig(new NoopServerSideEncryption())
+        new S3StorageConfig(new NoopServerSideEncryption(),
+                            new S3ClientConfig().setRequestTimeout(OptionalInt.of(60000))
+                                                .setClientExecutionTimeout(OptionalInt.of(180000)))
     );
   }
 }

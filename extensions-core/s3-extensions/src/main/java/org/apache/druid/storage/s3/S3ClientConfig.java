@@ -20,6 +20,7 @@
 package org.apache.druid.storage.s3;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.OptionalInt;
 
 /**
@@ -42,4 +43,17 @@ public class S3ClientConfig
     return clientExecutionTimeout;
   }
 
+  @VisibleForTesting
+  S3ClientConfig setRequestTimeout(OptionalInt requestTimeout)
+  {
+    this.requestTimeout = requestTimeout;
+    return this;
+  }
+
+  @VisibleForTesting
+  S3ClientConfig setClientExecutionTimeout(OptionalInt clientExecutionTimeout)
+  {
+    this.clientExecutionTimeout = clientExecutionTimeout;
+    return this;
+  }
 }
