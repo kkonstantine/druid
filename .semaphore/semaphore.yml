@@ -105,8 +105,14 @@ blocks:
               value: extensions-core/kafka-indexing-service
           commands: *run_tests
 
+        - name: "Druid SQL"
+          env_vars:
+            - name: MAVEN_PROJECTS
+              value: sql
+          commands: *run_tests
+
         - name: "Other Tests"
           env_vars:
             - name: MAVEN_PROJECTS
-              value: '!server,!processing,!indexing-service,!extensions-core/kafka-indexing-service,!extensions-contrib/confluent-extensions'
+              value: '!server,!processing,!indexing-service,!extensions-core/kafka-indexing-service,!extensions-contrib/confluent-extensions,!sql'
           commands: *run_tests
