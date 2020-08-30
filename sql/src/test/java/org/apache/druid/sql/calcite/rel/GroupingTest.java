@@ -19,10 +19,11 @@
 
 package org.apache.druid.sql.calcite.rel;
 
+import org.apache.druid.sql.calcite.util.CalciteTestBase;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Test;
 
-public class GroupingTest
+public class GroupingTest extends CalciteTestBase
 {
   @Test
   public void testEquals()

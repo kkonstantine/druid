@@ -19,6 +19,7 @@
 
 package org.apache.druid.sql.calcite.rule;
 
+import org.apache.druid.sql.calcite.util.CalciteTestBase;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
@@ -36,7 +37,7 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.util.List;
 
-public class DruidJoinRuleTest
+public class DruidJoinRuleTest extends CalciteTestBase
 {
   private final RexBuilder rexBuilder = new RexBuilder(new JavaTypeFactoryImpl());
 

@@ -19,6 +19,7 @@
 
 package org.apache.druid.sql.calcite.rel;
 
+import org.apache.druid.sql.calcite.util.CalciteTestBase;
 import com.google.common.collect.ImmutableSet;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Project;
@@ -28,7 +29,7 @@ import org.junit.Test;
 
 import javax.annotation.Nullable;
 
-public class DruidRelsTest
+public class DruidRelsTest extends CalciteTestBase
 {
   @Test
   public void test_isScanOrMapping_scan()
