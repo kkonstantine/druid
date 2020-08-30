@@ -39,7 +39,7 @@ blocks:
               -q -ff ${MAVEN_SKIP} ${MAVEN_SKIP_TESTS} -T1C
             - cache store
 
-  - name: "Tests"
+  - name: "Checks"
     task:
       env_vars: *env_vars
       prologue:
@@ -72,6 +72,15 @@ blocks:
           commands:
             - ${MVN} spotbugs:check --fail-at-end -pl '!benchmarks'
 
+  - name: "Tests"
+    task:
+      env_vars: *env_vars
+      prologue:
+        commands:
+          - sem-version java 8
+          - checkout
+          - cache restore
+      jobs:
         - name: "Confluent Extensions"
           env_vars:
             - name: MAVEN_PROJECTS
