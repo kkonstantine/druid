@@ -26,6 +26,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Timestamp;
 import io.opencensus.proto.metrics.v1.Metric;
 import io.opencensus.proto.metrics.v1.Point;
 import io.opencensus.proto.metrics.v1.TimeSeries;
@@ -36,8 +37,11 @@ import org.apache.druid.data.input.impl.ParseSpec;
 import org.apache.druid.java.util.common.StringUtils;
 import org.apache.druid.java.util.common.logger.Logger;
 import org.apache.druid.java.util.common.parsers.ParseException;
+import org.apache.druid.utils.CollectionUtils;
+import org.joda.time.DateTime;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,7 +58,6 @@ public class OpenCensusProtobufInputRowParser implements ByteBufferInputRowParse
   private static final String SEPARATOR = "-";
   private static final String DEFAULT_METRIC_DIMENSION = "name";
   private static final String VALUE = "value";
-  private static final String TIMESTAMP_COLUMN = "timestamp";
   private static final String DEFAULT_RESOURCE_PREFIX = "";
   private final ParseSpec parseSpec;
   private final List<String> dimensions;
@@ -120,7 +123,7 @@ public class OpenCensusProtobufInputRowParser implements ByteBufferInputRowParse
 
     Metric metric;
     try {
-      metric = Metric.parseFrom(ByteString.copyFrom(input));
+      metric = Metric.parseFrom(input);
     }
     catch (InvalidProtocolBufferException e) {
       throw new ParseException(e, "Protobuf message could not be parsed");
@@ -132,9 +135,8 @@ public class OpenCensusProtobufInputRowParser implements ByteBufferInputRowParse
         .collect(Collectors.toList());
 
     // Process resource labels map.
-    Map<String, String> resourceLabelsMap = metric.getResource().getLabelsMap().entrySet().stream()
-        .collect(Collectors.toMap(entry -> this.resourceLabelPrefix + entry.getKey(),
-            Map.Entry::getValue));
+    Map<String, String> resourceLabelsMap = CollectionUtils.mapKeys(
+        metric.getResource().getLabelsMap(), entry -> this.resourceLabelPrefix + entry);
 
     final List<String> dimensions;
 
@@ -172,54 +174,49 @@ public class OpenCensusProtobufInputRowParser implements ByteBufferInputRowParse
       // One row per timeSeries point.
       for (Point point : ts.getPointsList()) {
         // Time in millis
-        labels.put(TIMESTAMP_COLUMN, point.getTimestamp().getSeconds() * 1000);
+        final Timestamp t = point.getTimestamp();
+        final long millis = Instant.ofEpochSecond(t.getSeconds(), t.getNanos()).toEpochMilli();
 
         switch (point.getValueCase()) {
           case DOUBLE_VALUE:
-            Map<String, Object> doubleGauge = new HashMap<>();
-            doubleGauge.putAll(labels);
+            Map<String, Object> doubleGauge = new HashMap<>(labels);
             doubleGauge.put(metricDimension, metric.getMetricDescriptor().getName());
             doubleGauge.put(VALUE, point.getDoubleValue());
-            addDerivedMetricsRow(doubleGauge, dimensions, rows);
+            addDerivedMetricsRow(millis, doubleGauge, dimensions, rows);
             break;
           case INT64_VALUE:
-            HashMap<String, Object> intGauge = new HashMap<>();
-            intGauge.putAll(labels);
+            HashMap<String, Object> intGauge = new HashMap<>(labels);
             intGauge.put(VALUE, point.getInt64Value());
             intGauge.put(metricDimension, metric.getMetricDescriptor().getName());
-            addDerivedMetricsRow(intGauge, dimensions, rows);
+            addDerivedMetricsRow(millis, intGauge, dimensions, rows);
             break;
           case SUMMARY_VALUE:
             // count
-            Map<String, Object> summaryCount = new HashMap<>();
-            summaryCount.putAll(labels);
+            Map<String, Object> summaryCount = new HashMap<>(labels);
             summaryCount.put(metricDimension, metric.getMetricDescriptor().getName() + SEPARATOR + "count");
             summaryCount.put(VALUE, point.getSummaryValue().getCount().getValue());
-            addDerivedMetricsRow(summaryCount, dimensions, rows);
+            addDerivedMetricsRow(millis, summaryCount, dimensions, rows);
 
             // sum
-            Map<String, Object> summarySum = new HashMap<>();
-            summarySum.putAll(labels);
+            Map<String, Object> summarySum = new HashMap<>(labels);
             summarySum.put(metricDimension, metric.getMetricDescriptor().getName() + SEPARATOR + "sum");
             summarySum.put(VALUE, point.getSummaryValue().getSnapshot().getSum().getValue());
-            addDerivedMetricsRow(summarySum, dimensions, rows);
+            addDerivedMetricsRow(millis, summarySum, dimensions, rows);
 
             // TODO : Do we put percentiles into druid ?
             break;
           case DISTRIBUTION_VALUE:
             // count
-            Map<String, Object> distCount = new HashMap<>();
-            distCount.putAll(labels);
+            Map<String, Object> distCount = new HashMap<>(labels);
             distCount.put(metricDimension, metric.getMetricDescriptor().getName() + SEPARATOR + "count");
             distCount.put(VALUE, point.getDistributionValue().getCount());
-            addDerivedMetricsRow(distCount, dimensions, rows);
+            addDerivedMetricsRow(millis, distCount, dimensions, rows);
 
             // sum
-            Map<String, Object> distSum = new HashMap<>();
-            distSum.putAll(labels);
+            Map<String, Object> distSum = new HashMap<>(labels);
             distSum.put(metricDimension, metric.getMetricDescriptor().getName() + SEPARATOR + "sum");
             distSum.put(VALUE, point.getDistributionValue().getSum());
-            addDerivedMetricsRow(distSum, dimensions, rows);
+            addDerivedMetricsRow(millis, distSum, dimensions, rows);
             // TODO: How to handle buckets ?
             break;
         }
@@ -229,11 +226,11 @@ public class OpenCensusProtobufInputRowParser implements ByteBufferInputRowParse
     return rows;
   }
 
-  private void addDerivedMetricsRow(Map<String, Object> derivedMetrics, List<String> dimensions,
+  private void addDerivedMetricsRow(long timestamp, Map<String, Object> derivedMetrics, List<String> dimensions,
       List<InputRow> rows)
   {
     rows.add(new MapBasedInputRow(
-        parseSpec.getTimestampSpec().extractTimestamp(derivedMetrics),
+        timestamp,
         dimensions,
         derivedMetrics
     ));
