@@ -21,6 +21,7 @@ package org.apache.druid.query.timeseries;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import org.apache.druid.common.config.NullHandling;
 import org.apache.druid.java.util.common.DateTimes;
 import org.apache.druid.java.util.common.guava.Sequence;
 import org.apache.druid.java.util.common.guava.Sequences;
@@ -36,6 +37,7 @@ import org.apache.druid.query.UnionQueryRunner;
 import org.apache.druid.query.aggregation.LongSumAggregatorFactory;
 import org.apache.druid.query.context.ResponseContext;
 import org.apache.druid.segment.TestHelper;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -48,6 +50,12 @@ public class TimeSeriesUnionQueryRunnerTest
 {
   private final QueryRunner runner;
   private final boolean descending;
+
+  @BeforeClass
+  public static void setUpClass()
+  {
+    NullHandling.initializeForTests();
+  }
 
   public TimeSeriesUnionQueryRunnerTest(QueryRunner runner, boolean descending)
   {
