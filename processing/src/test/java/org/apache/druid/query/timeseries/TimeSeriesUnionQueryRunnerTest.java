@@ -50,8 +50,7 @@ public class TimeSeriesUnionQueryRunnerTest
   private final QueryRunner runner;
   private final boolean descending;
 
-  static
-  {
+  static {
     NullHandling.initializeForTests();
   }
 
