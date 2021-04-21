@@ -21,7 +21,6 @@ package org.apache.druid.query.timeseries;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import org.apache.druid.common.config.NullHandling;
 import org.apache.druid.java.util.common.DateTimes;
 import org.apache.druid.java.util.common.guava.Sequence;
 import org.apache.druid.java.util.common.guava.Sequences;
@@ -49,10 +48,6 @@ public class TimeSeriesUnionQueryRunnerTest
 {
   private final QueryRunner runner;
   private final boolean descending;
-
-  static {
-    NullHandling.initializeForTests();
-  }
 
   public TimeSeriesUnionQueryRunnerTest(QueryRunner runner, boolean descending)
   {
