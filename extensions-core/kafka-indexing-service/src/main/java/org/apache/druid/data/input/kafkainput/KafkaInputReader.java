@@ -49,8 +49,8 @@ public class KafkaInputReader implements InputEntityReader
   private final KafkaHeaderReader headerParser;
   private final InputEntityReader keyParser;
   private final InputEntityReader valueParser;
-  private final String keyColumnPrefix;
-  private final String recordTimestampColumnPrefix;
+  private final String keyColumn;
+  private final String recordTimestampColumn;
 
   /**
    *
@@ -59,8 +59,8 @@ public class KafkaInputReader implements InputEntityReader
    * @param headerParser Header parser for parsing the header section, kafkaInputFormat allows users to skip header parsing section and hence an be null
    * @param keyParser Key parser for key section, can be null as well
    * @param valueParser Value parser is a required section in kafkaInputFormat, but because of tombstone records we can have a null parser here.
-   * @param keyColumnPrefix Default key column prefix
-   * @param recordTimestampColumnPrefix Default kafka record's timestamp prefix
+   * @param keyColumn Default key column prefix
+   * @param recordTimestampColumn Default kafka record's timestamp prefix
    */
   public KafkaInputReader(
       InputRowSchema inputRowSchema,
@@ -68,8 +68,8 @@ public class KafkaInputReader implements InputEntityReader
       KafkaHeaderReader headerParser,
       InputEntityReader keyParser,
       InputEntityReader valueParser,
-      String keyColumnPrefix,
-      String recordTimestampColumnPrefix
+      String keyColumn,
+      String recordTimestampColumn
   )
   {
     this.inputRowSchema = inputRowSchema;
@@ -77,8 +77,20 @@ public class KafkaInputReader implements InputEntityReader
     this.headerParser = headerParser;
     this.keyParser = keyParser;
     this.valueParser = valueParser;
-    this.keyColumnPrefix = keyColumnPrefix;
-    this.recordTimestampColumnPrefix = recordTimestampColumnPrefix;
+    this.keyColumn = keyColumn;
+    this.recordTimestampColumn = recordTimestampColumn;
+  }
+
+  private List<String> getFinalDimensionList(HashSet<String> newDimensions)
+  {
+    final List<String> schemaDimensions = inputRowSchema.getDimensionsSpec().getDimensionNames();
+    if (!schemaDimensions.isEmpty()) {
+      return schemaDimensions;
+    } else {
+      return Lists.newArrayList(
+          Sets.difference(newDimensions, inputRowSchema.getDimensionsSpec().getDimensionExclusions())
+      );
+    }
   }
 
   private CloseableIterator<InputRow> buildBlendedRows(InputEntityReader valueParser, Map<String, Object> headerKeyList) throws IOException
@@ -104,21 +116,11 @@ public class KafkaInputReader implements InputEntityReader
           HashSet<String> newDimensions = new HashSet<String>(valueRow.getDimensions());
           newDimensions.addAll(headerKeyList.keySet());
           // Remove the dummy timestamp added in KafkaInputFormat
-          newDimensions.remove("__kif_auto_timestamp");
-
-          final List<String> schemaDimensions = inputRowSchema.getDimensionsSpec().getDimensionNames();
-          final List<String> dimensions;
-          if (!schemaDimensions.isEmpty()) {
-            dimensions = schemaDimensions;
-          } else {
-            dimensions = Lists.newArrayList(
-                Sets.difference(newDimensions, inputRowSchema.getDimensionsSpec().getDimensionExclusions())
-            );
-          }
+          newDimensions.remove(KafkaInputFormat.DEFAULT_AUTO_TIMESTAMP_STRING);
 
           return new MapBasedInputRow(
               inputRowSchema.getTimestampSpec().extractTimestamp(event),
-              dimensions,
+              getFinalDimensionList(newDimensions),
               event
           );
         }
@@ -128,18 +130,9 @@ public class KafkaInputReader implements InputEntityReader
   private CloseableIterator<InputRow> buildRowsWithoutValuePayload(Map<String, Object> headerKeyList)
   {
     HashSet<String> newDimensions = new HashSet<String>(headerKeyList.keySet());
-    final List<String> schemaDimensions = inputRowSchema.getDimensionsSpec().getDimensionNames();
-    final List<String> dimensions;
-    if (!schemaDimensions.isEmpty()) {
-      dimensions = schemaDimensions;
-    } else {
-      dimensions = Lists.newArrayList(
-          Sets.difference(newDimensions, inputRowSchema.getDimensionsSpec().getDimensionExclusions())
-      );
-    }
     InputRow row = new MapBasedInputRow(
         inputRowSchema.getTimestampSpec().extractTimestamp(headerKeyList),
-        dimensions,
+        getFinalDimensionList(newDimensions),
         headerKeyList
     );
     List<InputRow> rows = Collections.singletonList(row);
@@ -149,17 +142,17 @@ public class KafkaInputReader implements InputEntityReader
   @Override
   public CloseableIterator<InputRow> read() throws IOException
   {
-    Map<String, Object> mergeList = new HashMap<>();
+    Map<String, Object> mergeMap = new HashMap<>();
     if (headerParser != null) {
       List<Pair<String, Object>> headerList = headerParser.read();
       for (Pair<String, Object> ele : headerList) {
-        mergeList.put(ele.lhs, ele.rhs);
+        mergeMap.put(ele.lhs, ele.rhs);
       }
     }
 
     // Add kafka record timestamp to the mergelist, we will skip record timestamp if the same key exists already in the header list
-    if (!mergeList.containsKey(recordTimestampColumnPrefix)) {
-      mergeList.put(recordTimestampColumnPrefix, record.getRecord().timestamp());
+    if (!mergeMap.containsKey(recordTimestampColumn)) {
+      mergeMap.put(recordTimestampColumn, record.getRecord().timestamp());
     }
 
     if (keyParser != null) {
@@ -170,8 +163,8 @@ public class KafkaInputReader implements InputEntityReader
           // Parsers returning other types are not compatible currently.
           MapBasedInputRow keyRow = (MapBasedInputRow) keyIterator.next();
           // Add the key to the mergeList only if the key string is not already present
-          if (!mergeList.containsKey(keyColumnPrefix)) {
-            mergeList.put(keyColumnPrefix, keyRow.getEvent().entrySet().stream().findFirst().get().getValue());
+          if (!mergeMap.containsKey(keyColumn)) {
+            mergeMap.put(keyColumn, keyRow.getEvent().entrySet().stream().findFirst().get().getValue());
           }
         }
       }
@@ -181,9 +174,9 @@ public class KafkaInputReader implements InputEntityReader
     }
 
     if (valueParser != null) {
-      return buildBlendedRows(valueParser, mergeList);
+      return buildBlendedRows(valueParser, mergeMap);
     } else {
-      return buildRowsWithoutValuePayload(mergeList);
+      return buildRowsWithoutValuePayload(mergeMap);
     }
   }
 
