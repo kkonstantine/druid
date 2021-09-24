@@ -24,7 +24,6 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
-import io.opentelemetry.context.propagation.TextMapGetter;
 import org.apache.druid.java.util.common.logger.Logger;
 import org.apache.druid.java.util.emitter.core.Emitter;
 import org.apache.druid.java.util.emitter.core.Event;
@@ -40,11 +39,12 @@ import java.util.stream.Collectors;
 public class OpenTelemetryEmitter implements Emitter
 {
   private static final Logger log = new Logger(OpenTelemetryEmitter.class);
+  private static final DruidContextTextMapGetter DRUID_CONTEXT_MAP_GETTER = new DruidContextTextMapGetter();
   private final Tracer tracer;
 
-  OpenTelemetryEmitter()
+  OpenTelemetryEmitter(Tracer tracer)
   {
-    tracer = GlobalOpenTelemetry.getTracer("druid-opentelemtry-extension");
+    this.tracer = tracer;
   }
 
   @Override
@@ -66,30 +66,19 @@ public class OpenTelemetryEmitter implements Emitter
     if (!event.getMetric().equals("query/time")) {
       return;
     }
+
+    emitQueryTimeEvent(event);
+  }
+
+  private void emitQueryTimeEvent(ServiceMetricEvent event)
+  {
     DateTime endTime = event.getCreatedTime();
     DateTime startTime = event.getCreatedTime().minusMillis(event.getValue().intValue());
 
-    TextMapGetter<Map<String, String>> contextGetter =
-        new TextMapGetter<Map<String, String>>()
-        {
-          @Override
-          public String get(Map<String, String> carrier, String key)
-          {
-            if (carrier.containsKey(key)) {
-              return carrier.get(key);
-            }
-            return null;
-          }
-
-          @Override
-          public Iterable<String> keys(Map<String, String> carrier)
-          {
-            return carrier.keySet();
-          }
-        };
-
     Context extractedContext = GlobalOpenTelemetry.getPropagators().getTextMapPropagator()
-                                                  .extract(Context.current(), getContextAsString(event), contextGetter);
+                                                  .extract(Context.current(), getContextAsString(event),
+                                                           DRUID_CONTEXT_MAP_GETTER
+                                                  );
 
     try (Scope scope = extractedContext.makeCurrent()) {
       Span span = tracer.spanBuilder(event.getService()).setStartTimestamp(
