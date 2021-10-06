@@ -74,7 +74,7 @@ public class OpenTelemetryEmitter implements Emitter
 
   private void emitQueryTimeEvent(ServiceMetricEvent event)
   {
-    Context context = propagator.extract(Context.current(), getContextAsString(event), DRUID_CONTEXT_MAP_GETTER);
+    Context context = propagator.extract(Context.current(), getOpentelemetryContextAsString(event), DRUID_CONTEXT_MAP_GETTER);
 
     try (Scope scope = context.makeCurrent()) {
       DateTime endTime = event.getCreatedTime();
@@ -87,21 +87,27 @@ public class OpenTelemetryEmitter implements Emitter
     }
   }
 
-  private static Map<String, String> getContextAsString(ServiceMetricEvent event)
+  private static Map<String, String> getOpentelemetryContextAsString(ServiceMetricEvent event)
   {
-    return getContext(event).entrySet()
-                            .stream()
-                            .filter(entry -> entry.getValue() != null)
-                            .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
+    return getOpentelemetryContext(event).entrySet()
+                                         .stream()
+                                         .filter(entry -> entry.getValue() != null)
+                                         .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
   }
 
-  private static Map<String, Object> getContext(ServiceMetricEvent event)
+  private static Map<String, Object> getOpentelemetryContext(ServiceMetricEvent event)
   {
     Object context = event.getUserDims().get("context");
     if (!(context instanceof Map)) {
       return Collections.emptyMap();
     }
-    return (Map<String, Object>) context;
+
+    Object opentelemetryContext = ((Map<String, Object>) context).get("opentelemetryContext");
+    if (!(opentelemetryContext instanceof Map)) {
+      return Collections.emptyMap();
+    }
+
+    return (Map<String, Object>) opentelemetryContext;
   }
 
   @Override
