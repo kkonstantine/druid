@@ -77,7 +77,7 @@ blocks:
         - name: "analyze dependencies"
           commands:
             - >
-              ${MVN} ${MAVEN_SKIP} dependency:analyze -DoutputXML=true -DignoreNonCompile=true -DfailOnWarning=true || { echo "
+              ${MVN} ${MAVEN_SKIP} dependency:analyze -DoutputXML=true -DignoreNonCompile=true -DfailOnWarning=true --fail-at-end || { echo "
 
               The dependency analysis has found a dependency that is either:
               1) Used and undeclared: These are available as a transitive dependency but should be explicitly
