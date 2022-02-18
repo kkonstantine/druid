@@ -32,10 +32,6 @@ import org.apache.druid.data.input.impl.TimestampSpec;
 import org.apache.druid.data.input.kafka.KafkaRecordEntity;
 import org.apache.druid.java.util.common.parsers.CloseableIterator;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.Headers;
-import org.apache.kafka.common.header.internals.RecordHeader;
-import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.record.TimestampType;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,15 +40,13 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class OpenTelemetryMetricsProtobufReaderTest
+public class OpenTelemetryInputFormatTest
 {
   private static final long TIMESTAMP = TimeUnit.MILLISECONDS.toNanos(Instant.parse("2019-07-12T09:30:01.123Z").toEpochMilli());
   public static final String RESOURCE_ATTRIBUTE_COUNTRY = "country";
@@ -70,13 +64,7 @@ public class OpenTelemetryMetricsProtobufReaderTest
   public static final String METRIC_ATTRIBUTE_FOO_KEY = "foo_key";
   public static final String METRIC_ATTRIBUTE_FOO_VAL = "foo_value";
 
-  private final MetricsData.Builder metricsDataBuilder = MetricsData.newBuilder();
-
-  private final Metric.Builder metricBuilder = metricsDataBuilder.addResourceMetricsBuilder()
-      .addInstrumentationLibraryMetricsBuilder()
-      .addMetricsBuilder();
-
-  private final DimensionsSpec dimensionsSpec = new DimensionsSpec(ImmutableList.of(
+  public static final DimensionsSpec DIMENSIONSSPEC = new DimensionsSpec(ImmutableList.of(
       new StringDimensionSchema("descriptor." + METRIC_ATTRIBUTE_COLOR),
       new StringDimensionSchema("descriptor." + METRIC_ATTRIBUTE_FOO_KEY),
       new StringDimensionSchema("custom." + RESOURCE_ATTRIBUTE_ENV),
@@ -88,12 +76,13 @@ public class OpenTelemetryMetricsProtobufReaderTest
   public static final long OFFSET = 13095752723L;
   public static final long TS = 1643974867555L;
   public static final TimestampType TSTYPE = TimestampType.CREATE_TIME;
-  public static final byte[] V0_HEADER_BYTES = ByteBuffer.allocate(Integer.BYTES)
-    .order(ByteOrder.LITTLE_ENDIAN)
-    .putInt(1)
-    .array();
-  private static final Header HEADERV1 = new RecordHeader("v", V0_HEADER_BYTES);
-  private static final Headers HEADERS = new RecordHeaders(new Header[]{HEADERV1});
+
+  private final MetricsData.Builder metricsDataBuilder = MetricsData.newBuilder();
+
+  private final Metric.Builder metricBuilder = metricsDataBuilder.addResourceMetricsBuilder()
+      .addInstrumentationLibraryMetricsBuilder()
+      .addMetricsBuilder();
+
 
 
 
@@ -134,15 +123,16 @@ public class OpenTelemetryMetricsProtobufReaderTest
 
     MetricsData metricsData = metricsDataBuilder.build();
     ConsumerRecord consumerRecord = new ConsumerRecord(TOPIC, PARTITION, OFFSET, TS, TSTYPE,
-         -1L, -1, -1, null, metricsData.toByteArray(), HEADERS);
+         -1L, -1, -1, null, metricsData.toByteArray(), OpenXProtobufReaderTest.OPENTELEMETRY_HEADER);
     KafkaRecordEntity kafkaRecordEntity = new KafkaRecordEntity(consumerRecord);
     OpenCensusProtobufInputFormat inputFormat = new OpenCensusProtobufInputFormat("metric.name",
+        null,
         "descriptor.",
         "custom.");
 
     CloseableIterator<InputRow> rows = inputFormat.createReader(new InputRowSchema(
         new TimestampSpec("timestamp", "iso", null),
-        dimensionsSpec,
+        DIMENSIONSSPEC,
         Collections.emptyList()
       ), kafkaRecordEntity, null).read();
 
@@ -172,14 +162,15 @@ public class OpenTelemetryMetricsProtobufReaderTest
 
     MetricsData metricsData = metricsDataBuilder.build();
     ConsumerRecord consumerRecord = new ConsumerRecord(TOPIC, PARTITION, OFFSET, TS, TSTYPE,
-        -1L, -1, -1, null, metricsData.toByteArray(), HEADERS);
+        -1L, -1, -1, null, metricsData.toByteArray(), OpenXProtobufReaderTest.OPENTELEMETRY_HEADER);
     KafkaRecordEntity kafkaRecordEntity = new KafkaRecordEntity(consumerRecord);
     OpenCensusProtobufInputFormat inputFormat = new OpenCensusProtobufInputFormat("metric.name",
+        null,
         "descriptor.",
         "custom.");
     CloseableIterator<InputRow> rows = inputFormat.createReader(new InputRowSchema(
         new TimestampSpec("timestamp", "iso", null),
-        dimensionsSpec,
+        DIMENSIONSSPEC,
         Collections.emptyList()
     ), kafkaRecordEntity, null).read();
 
@@ -234,15 +225,16 @@ public class OpenTelemetryMetricsProtobufReaderTest
 
     MetricsData metricsData = metricsDataBuilder.build();
     ConsumerRecord consumerRecord = new ConsumerRecord(TOPIC, PARTITION, OFFSET, TS, TSTYPE,
-        -1L, -1, -1, null, metricsData.toByteArray(), HEADERS);
+        -1L, -1, -1, null, metricsData.toByteArray(), OpenXProtobufReaderTest.OPENTELEMETRY_HEADER);
     KafkaRecordEntity kafkaRecordEntity = new KafkaRecordEntity(consumerRecord);
     OpenCensusProtobufInputFormat inputFormat = new OpenCensusProtobufInputFormat("metric.name",
+         null,
          "descriptor.",
         "custom.");
 
     CloseableIterator<InputRow> rows = inputFormat.createReader(new InputRowSchema(
         new TimestampSpec("timestamp", "iso", null),
-        dimensionsSpec,
+        DIMENSIONSSPEC,
         Collections.emptyList()
     ), kafkaRecordEntity, null).read();
 
@@ -296,9 +288,10 @@ public class OpenTelemetryMetricsProtobufReaderTest
 
     MetricsData metricsData = metricsDataBuilder.build();
     ConsumerRecord consumerRecord = new ConsumerRecord(TOPIC, PARTITION, OFFSET, TS, TSTYPE,
-        -1L, -1, -1, null, metricsData.toByteArray(), HEADERS);
+        -1L, -1, -1, null, metricsData.toByteArray(), OpenXProtobufReaderTest.OPENTELEMETRY_HEADER);
     KafkaRecordEntity kafkaRecordEntity = new KafkaRecordEntity(consumerRecord);
     OpenCensusProtobufInputFormat inputFormat = new OpenCensusProtobufInputFormat("metric.name",
+        null,
         "descriptor.",
         "custom.");
 
