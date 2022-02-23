@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import org.apache.druid.data.input.ColumnsFilter;
 import org.apache.druid.data.input.InputEntityReader;
 import org.apache.druid.data.input.InputRow;
 import org.apache.druid.data.input.InputRowSchema;
@@ -48,7 +49,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 
 public class KafkaInputFormatTest
 {
@@ -178,7 +178,7 @@ public class KafkaInputFormatTest
                 "kafka.newheader.kafkapkc",
                 "kafka.newts.timestamp"
             ))),
-            Collections.emptyList()
+            ColumnsFilter.all()
         ),
         inputEntity,
         null
@@ -251,7 +251,7 @@ public class KafkaInputFormatTest
                 "kafka.newheader.kafkapkc",
                 "kafka.newts.timestamp"
             ))),
-            Collections.emptyList()
+            ColumnsFilter.all()
         ),
         inputEntity,
         null
@@ -323,7 +323,7 @@ public class KafkaInputFormatTest
                 "kafka.newheader.encoding",
                 "kafka.newheader.kafkapkc"
             ))),
-            Collections.emptyList()
+            ColumnsFilter.all()
         ),
         inputEntity,
         null
@@ -416,7 +416,7 @@ public class KafkaInputFormatTest
                 "bar", "foo",
                 "kafka.newts.timestamp"
             ))),
-            Collections.emptyList()
+            ColumnsFilter.all()
         ),
         inputEntity,
         null
