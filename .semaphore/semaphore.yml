@@ -98,7 +98,7 @@ blocks:
               value: extensions-contrib/confluent-extensions
           commands: &run_tests
             - >
-              MAVEN_OPTS="${MAVEN_OPTS} -Xmx2g" ${MVN} test -pl ${MAVEN_PROJECTS}
+              MAVEN_OPTS="${MAVEN_OPTS} -Xmx4g" ${MVN} test -pl ${MAVEN_PROJECTS}
               ${MAVEN_SKIP} -Dremoteresources.skip=true
 
         - name: "Server"
