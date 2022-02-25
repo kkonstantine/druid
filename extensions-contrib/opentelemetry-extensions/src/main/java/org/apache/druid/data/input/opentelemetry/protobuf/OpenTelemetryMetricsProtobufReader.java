@@ -149,10 +149,8 @@ public class OpenTelemetryMetricsProtobufReader implements InputEntityReader
 
     if (dataPoint.hasAsInt()) {
       event.put(valueDimension, dataPoint.getAsInt());
-    } else if (dataPoint.hasAsDouble()) {
-      event.put(valueDimension, dataPoint.getAsDouble());
     } else {
-      throw new IllegalStateException("Unexpected dataPoint value type. Expected Int or Double");
+      event.put(valueDimension, dataPoint.getAsDouble());
     }
 
     event.putAll(resourceAttributes);
